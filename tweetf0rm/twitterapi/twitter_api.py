@@ -327,7 +327,7 @@ class TwitterAPI(twython.Twython):
             raise Exception("search: query cannot be None")
 
         if not key:
-            key = md5(query)
+            key = md5(str(query).encode('utf-8'))
 
         logger.info("received query: %s " % query)
 
