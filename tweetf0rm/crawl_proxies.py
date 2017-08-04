@@ -9,6 +9,7 @@ import sys
 
 from tweetf0rm.proxies import proxy_checker
 
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s-[%(asctime)s][%(module)s][%(funcName)s][%(lineno)d]: %(message)s')
@@ -26,8 +27,8 @@ def crawl_spys_ru(p):
     # 	'sto': 'View+150+per+page'
     # }
     r = requests.get(url)
-
-    html = r.text.encode('utf8')
+    r.encoding = 'utf-8'
+    html = r.text
 
     # the port numbers are coded...
     coded = re.findall(r'<\/table><script type="text\/javascript">(.*?)<\/script>', html)[0]
@@ -52,7 +53,7 @@ def crawl_spys_ru(p):
             cnt = 0
             # logger.info(len(tds))
             for td in tds:
-                text = td.text_content().encode('utf-8')
+                text = td.text_content()
                 if text == 'Proxy address:port':
                     break
 
@@ -72,7 +73,7 @@ def crawl_spys_ru(p):
                     proxy_type = text.lower()
 
                 if cnt == 3:
-                    hh = lxml.html.tostring(td).decode('uft-8')
+                    hh = lxml.html.tostring(td).decode('utf-8')
                     country = re.findall(r'<font class="spy14">(.*?)<\/font>', hh)[0]
                 # if (country == 'China'):
                 # 	break
@@ -101,11 +102,11 @@ if __name__ == "__main__":
     url = 'http://spys.ru/en/http-proxy-list/'
 
     r = requests.get(url)
-
-    html = r.text.encode('utf8')
+    r.encoding = 'utf-8'
+    html = r.text
 
     # the port numbers are coded...
-    urls = re.findall(r'<a href=\'(/en/http-proxy-list/\d+/.*?)\'>', html)
+    urls = re.findall('<a href=\'(/en/http-proxy-list/\d+/.*?)\'>', html)
 
     urls = set(urls)
 
@@ -117,14 +118,14 @@ if __name__ == "__main__":
 
     # check if there is a proxies.json locally, merge the check results rather than overwrite it
     if os.path.exists(os.path.abspath(args.output)):
-        with open(os.path.abspath(args.output), 'rb') as proxy_f:
+        with open(os.path.abspath(args.output), 'r') as proxy_f:
             proxies.extend(json.load(proxy_f)['proxies'])
 
     ips = []
     proxy_list = []
     for proxy in proxies:
-        ip = proxy.keys()[0]
-        proxy_type = proxy.values()[0]
+        ip = list(proxy.keys())[0]
+        proxy_type = list(proxy.values())[0]
 
         if ip not in ips:
             ips.append(ip)
@@ -133,5 +134,5 @@ if __name__ == "__main__":
     proxies = [p['proxy'] for p in proxy_checker(proxy_list)]
 
     logger.info("number of proxies that are still alive: %d" % len(proxies))
-    with open(os.path.abspath(args.output), 'wb') as proxy_f:
-        json.dump({'proxies': proxies}, proxy_f)
+    with open(os.path.abspath(args.output), 'w') as proxy_f:
+        json.dumps({'proxies': proxies}, proxy_f)
